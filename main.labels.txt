@@ -1,0 +1,9 @@
+al 0080C4 .@loop
+al 0080C4 .main
+al 008049 .upload_pal
+al 008001 .upload_dma
+al 008000 .irq
+al 008061 .reset
+al 008007 .nmi
+al 000200 .oam
+al 0080C7 .pal

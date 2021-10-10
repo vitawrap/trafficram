@@ -1,0 +1,1 @@
+ca65 main.s -g -o main.o && ld65 -o game.nes -C nes.cfg main.o -m main.map.txt -Ln main.labels.txt --dbgfile main.nes.dbg
