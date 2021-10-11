@@ -1,0 +1,5 @@
+# do not save generated intermediary or debug files
+./*.o
+./*.labels.txt
+./*.map.txt
+./*.nes.dbg
