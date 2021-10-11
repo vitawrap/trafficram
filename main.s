@@ -58,6 +58,9 @@ INES_SRAM   = 1 ; PRG ram as save battery
 
 .segment "RODATA"
 pal: .incbin "assets.pal"
+; METATILE DEFINITIONS
+metatiles:
+mt_road:    .byte $4F, $4F, $4F, $4F
 
 
 .segment "OAM"
@@ -71,8 +74,11 @@ oam: .res 256        ; sprite OAM data to be uploaded by DMA
 
 
 ; CPU RAM variables
-zp_periodlo = $00
-zp_scroll   = $01
+.segment "ZEROPAGE"
+zp_nmi_lock:    .res 1
+zp_periodlo:    .res 1
+zp_scroll:      .res 1
+
 
 ; IRQ interrupt
 .segment "CODE"
@@ -87,16 +93,18 @@ upload_dma:
 ; NMI interrupt
 .segment "CODE"
 nmi:
-    ; play a simple pulse
-    lda #$0F
-    sta APUFLAGS    ; enable all channels but DPCM
-    lda #$0F
-    sta SQ1_ENV     ; full volume, use internal systems
-    lda $00
-    sta SQ1_LO
-    lda #$10
-    sta SQ1_HI
-    inc zp_periodlo ; decrease pitch
+    pha
+    txa
+    pha
+    tya
+    pha
+
+    ; check nmi mutex availability
+    lda zp_nmi_lock
+    beq :+
+        jmp @nmi_ret
+    :
+    inc zp_nmi_lock
 
     lda PPUSTATUS   ; late read (don't break the latch)
     lda #%10010000
@@ -124,6 +132,28 @@ nmi:
     lda #0
     sta PPUSCROLL   ; y scroll (0)
 
+    ; PPU UPDATES DONE, can issue APU updates here
+
+    ; ; play a simple pulse
+    ; lda #$0F
+    ; sta APUFLAGS    ; enable all channels but DPCM
+    ; lda #$0F
+    ; sta SQ1_ENV     ; full volume, use internal systems
+    ; lda $00
+    ; sta SQ1_LO
+    ; lda #$10
+    ; sta SQ1_HI
+    ; inc zp_periodlo ; decrease pitch
+
+@nmi_unlock:
+    dec zp_nmi_lock
+
+@nmi_ret:   ; end of nmi, restoring state
+    pla
+    tay
+    pla
+    tax
+    pla
     rti
 
 upload_pal:

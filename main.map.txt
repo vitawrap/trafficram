@@ -1,8 +1,9 @@
 Modules list:
 -------------
 main.o:
-    CODE              Offs=000000  Size=0000C7  Align=00001  Fill=0000
-    RODATA            Offs=000000  Size=000010  Align=00001  Fill=0000
+    CODE              Offs=000000  Size=0000C6  Align=00001  Fill=0000
+    RODATA            Offs=000000  Size=000014  Align=00001  Fill=0000
+    ZEROPAGE          Offs=000000  Size=000003  Align=00001  Fill=0000
     HEADER            Offs=000000  Size=000010  Align=00001  Fill=0000
     TILES             Offs=000000  Size=002000  Align=00001  Fill=0000
     OAM               Offs=000000  Size=000100  Align=00001  Fill=0000
@@ -15,9 +16,10 @@ Name                   Start     End    Size  Align
 ----------------------------------------------------
 HEADER                000000  00000F  000010  00001
 TILES                 000000  001FFF  002000  00001
+ZEROPAGE              000000  000002  000003  00001
 OAM                   000200  0002FF  000100  00001
-CODE                  008000  0080C6  0000C7  00001
-RODATA                0080C7  0080D6  000010  00001
+CODE                  008000  0080C5  0000C6  00001
+RODATA                0080C6  0080D9  000014  00001
 VECTORS               00FFFA  00FFFF  000006  00001
 
 
