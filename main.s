@@ -38,6 +38,14 @@
         VRAM_PAL    = $3F00 ;       Palette RAM indexes
         VRAM_PAM    = $3F20 ;       Mirror of Palette RAM indexes
 
+; game character mapping
+.macro GAME_TEXT    text
+    .pushcharmap
+    .include "charmap.inc"
+    .byte text
+    .popcharmap
+.endmacro
+
 .segment "HEADER"
 
 INES_MAPPER = 0
