@@ -133,18 +133,19 @@ nmi:
     sta PPUSCROLL   ; y scroll (0)
 
     ; PPU UPDATES DONE, can issue APU updates here
-
+    
     ; ; play a simple pulse
     ; lda #$0F
     ; sta APUFLAGS    ; enable all channels but DPCM
     ; lda #$0F
     ; sta SQ1_ENV     ; full volume, use internal systems
-    ; lda $00
+    ; lda zp_periodlo
     ; sta SQ1_LO
     ; lda #$10
     ; sta SQ1_HI
     ; inc zp_periodlo ; decrease pitch
-
+    ; inc zp_periodlo ; decrease pitch
+    
 @nmi_unlock:
     dec zp_nmi_lock
 
