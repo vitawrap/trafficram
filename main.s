@@ -58,9 +58,53 @@ INES_SRAM   = 1 ; PRG ram as save battery
 
 .segment "RODATA"
 pal: .incbin "assets.pal"
-; METATILE DEFINITIONS
-metatiles:
+mts:
+; METATILE DEFINITIONS, 4 byte stride starting from metatiles
+; NAME            TOP       BOTTOM
+mt_null:    .byte $00, $00, $00, $00
 mt_road:    .byte $4F, $4F, $4F, $4F
+mt_lrside:  .byte $35, $36, $35, $36
+mt_rrside:  .byte $57, $35, $57, $35
+mt_rrvent:  .byte $39, $36, $35, $36
+mt_rline:   .byte $57, $36, $57, $36
+mt_cone:    .byte $41, $42, $43, $44
+mt_tlwalk:  .byte $47, $46, $30, $31
+mt_trwalk:  .byte $46, $45, $31, $34
+mt_blwalk:  .byte $30, $31, $3A, $3B
+mt_brwalk:  .byte $31, $34, $3B, $3C
+mt_lwalk:   .byte $30, $31, $30, $31
+mt_rwalk:   .byte $31, $34, $31, $34
+mt_twalk:   .byte $46, $31, $46, $31
+mt_bwalk:   .byte $31, $3B, $31, $3B
+mt_light:   .byte $3D, $3D, $3E, $3E
+mt_pole:    .byte $3F, $40, $3F, $40
+mt_barrier: .byte $58, $58, $3F, $40
+.word 0 ; temporary padding, so level starts at multiple of 16
+
+; STRIPS (horizontal level components) (name contains the horizontal extent, for width calculations)
+.define strip_road_5()      1<<6+((mt_lrside-mts)>>2), 1<<6+((mt_road-mts)>>2), 1<<6+((mt_rline-mts)>>2), 1<<6+((mt_road-mts)>>2), 1<<6+((mt_rrside-mts)>>2)
+.define strip_walk_top_3()  (mt_tlwalk-mts)>>2, (mt_twalk-mts)>>2, (mt_trwalk-mts)>>2
+.define strip_walk_mid_3()  (mt_lwalk-mts)>>2, (mt_null-mts)>>2, (mt_rwalk-mts)>>2
+.define strip_walk_btm_3()  (mt_blwalk-mts)>>2, (mt_bwalk-mts)>>2, (mt_brwalk-mts)>>2
+
+; LEVELS (using strips or mt tiles)
+levels:
+lv_test:
+.byte strip_walk_top_3, strip_road_5, strip_road_5, strip_walk_top_3
+.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
+.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
+.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
+.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
+.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
+.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
+.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
+.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
+.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
+.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
+.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
+.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
+.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
+.byte strip_walk_btm_3, strip_road_5, strip_road_5, strip_walk_btm_3
 
 
 .segment "OAM"
