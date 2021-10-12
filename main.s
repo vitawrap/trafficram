@@ -209,6 +209,24 @@ nmi:
     pla
     rti
 
+; For the moment we only try to load our test level
+bss_level_addr = lv_test    ; to be placed in bss ram
+upload_bg:
+    ; we have a level with a grid of 16x15 bytes, each corresponding to a tile id and attribute palette index
+    ldy #0
+    :
+        ; get grid byte
+        lda (bss_level_addr), Y
+        ; dissect it (6-bit type, high 2-bit pal idx) tile format: 1<<6+((mt_lrside-mts)>>2)
+        tax
+        ora #%00111111  ; tile index
+        asl #2          ; turn into address (* 4)
+        
+        iny
+        cpy #$10
+        bne :-
+    rts
+
 upload_pal:
     ; background palette
     lda #>VRAM_PAL
