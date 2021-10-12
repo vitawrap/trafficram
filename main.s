@@ -66,6 +66,7 @@ INES_SRAM   = 1 ; PRG ram as save battery
 
 .segment "RODATA"
 pal: .incbin "assets.pal"
+.res 13 ; padding, so tiles start at multiple of 16
 mts:
 ; METATILE DEFINITIONS, 4 byte stride starting from metatiles
 ; NAME            TOP       BOTTOM
@@ -82,12 +83,11 @@ mt_blwalk:  .byte $30, $31, $3A, $3B
 mt_brwalk:  .byte $31, $34, $3B, $3C
 mt_lwalk:   .byte $30, $31, $30, $31
 mt_rwalk:   .byte $31, $34, $31, $34
-mt_twalk:   .byte $46, $31, $46, $31
+mt_twalk:   .byte $46, $46, $31, $31
 mt_bwalk:   .byte $31, $3B, $31, $3B
 mt_light:   .byte $3D, $3D, $3E, $3E
 mt_pole:    .byte $3F, $40, $3F, $40
 mt_barrier: .byte $58, $58, $3F, $40
-.word 0 ; temporary padding, so level starts at multiple of 16
 
 ; STRIPS (horizontal level components) (name contains the horizontal extent, for width calculations)
 .define strip_road_5()      1<<6+((mt_lrside-mts)>>2), 1<<6+((mt_road-mts)>>2), 1<<6+((mt_rline-mts)>>2), 1<<6+((mt_road-mts)>>2), 1<<6+((mt_rrside-mts)>>2)
@@ -130,6 +130,12 @@ oam: .res 256        ; sprite OAM data to be uploaded by DMA
 zp_nmi_lock:    .res 1
 zp_periodlo:    .res 1
 zp_scroll:      .res 1
+; used when uploading a background
+zp_nt0cursor_lo:    .res 1
+zp_nt0cursor_hi:    .res 1
+
+.segment "BSS"
+; bss_level_addr:     .res 2
 
 
 ; IRQ interrupt
@@ -178,11 +184,14 @@ nmi:
     jsr upload_dma
 
     ; scroll back into position
-    lda zp_scroll
-    sta PPUSCROLL
-    inc zp_scroll
+    ; lda zp_scroll
+    ; sta PPUSCROLL
+    ; inc zp_scroll
+    ; lda #0
+    ; sta PPUSCROLL   ; y scroll (0)
     lda #0
-    sta PPUSCROLL   ; y scroll (0)
+    sta PPUSCROLL
+    sta PPUSCROLL
 
     ; PPU UPDATES DONE, can issue APU updates here
     
@@ -209,22 +218,37 @@ nmi:
     pla
     rti
 
-; For the moment we only try to load our test level
-bss_level_addr = lv_test    ; to be placed in bss ram
-upload_bg:
+; Load level specified by bss_level_addr (low address byte + high address byte)
+bss_level_addr = lv_test    ; only possible way to support indexed outside zp
+upload_level:  ; CALL IN VBLANK OR WHEN BACKGROUND IS DISABLED
     ; we have a level with a grid of 16x15 bytes, each corresponding to a tile id and attribute palette index
+    ; make sure we write lines
+    lda PPUCTRL
+    and #%11111011
+    sta PPUCTRL
+    ; start ppu write at start of nametable 0
+    lda #>VRAM_NT0
+    sta PPUADDR
+    lda #<VRAM_NT0
+    sta PPUADDR
     ldy #0
-    :
+@nametable_line:
         ; get grid byte
-        lda (bss_level_addr), Y
+        lda bss_level_addr, Y
         ; dissect it (6-bit type, high 2-bit pal idx) tile format: 1<<6+((mt_lrside-mts)>>2)
+        pha             ; push temp unmasked byte
+        and #$3F        ; tile index mask
+        asl A
+        asl A           ; turn index into metatile list offset (*4)
         tax
-        ora #%00111111  ; tile index
-        asl #2          ; turn into address (* 4)
-        
+        lda mts, X
+        sta PPUDATA     ; write left part of tile
+        lda mts+1, X
+        sta PPUDATA     ; write right part of tile
+        pla             ; pull unmasked tile value
         iny
         cpy #$10
-        bne :-
+        bne @nametable_line
     rts
 
 upload_pal:
@@ -304,6 +328,13 @@ reset:
     ; upload dma (avoid sprites flashing
     ; before first real vblank callback)
     jsr upload_dma
+
+    ; upload background with our tile loader
+    ; lda #<lv_test
+    ; sta bss_level_addr
+    ; lda #>lv_test
+    ; sta bss_level_addr+1
+    jsr upload_level
 
     lda #%10010000
     sta PPUCTRL     ; reenable NMI
