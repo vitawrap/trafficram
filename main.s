@@ -132,10 +132,11 @@ oam: .res 256        ; sprite OAM data to be uploaded by DMA
 ; CPU RAM variables
 .segment "ZEROPAGE"
 zp_nmi_lock:    .res 1
-zp_periodlo:    .res 1
+zp_periodlo:    .res 1  ; debug sound period (low)
 zp_scroll:      .res 1
 ; used when uploading a background
-zp_nt_offset:   .res 1
+zp_nt_offset:   .res 1  ; nametable tile offset
+zp_nt_attrib:   .res 1  ; memory for current attrib
 
 .segment "BSS"
 ; bss_level_addr:     .res 2
@@ -264,7 +265,7 @@ upload_level:  ; CALL IN VBLANK OR WHEN BACKGROUND IS DISABLED
 
     ldy #0
 @nametable_btm:
-        ; get grid byte
+        ; get grid byte (+ offset we have in ram)
         tya
         pha
         clc
@@ -291,21 +292,22 @@ upload_level:  ; CALL IN VBLANK OR WHEN BACKGROUND IS DISABLED
     clc
     adc zp_nt_offset
     sta zp_nt_offset
-    bcc @nametable_line
+    bcc @nametable_line ; complete an entire screen of tiles
 
-;     lda #>VRAM_AT0
-;     sta PPUADDR
-;     lda #<VRAM_AT1
-;     sta PPUADDR
-;     ldy #0
-; @nametable_attribs  ; each loop completes a 32x32 block of attribs
-;         ; get grid byte
-;         lda bss_level_addr, Y
-;         ; get the hi pal address
-        
-;         iny
-;         cpy #$10
-;         bne @nametable_attribs
+    lda #>VRAM_AT0  ; now to fill the attribute table
+    sta PPUADDR
+    lda #<VRAM_AT1
+    sta PPUADDR
+    ldy #0
+    @nametable_attribs: ; each loop completes a 32x32 block of attribs
+            ; get grid byte
+            lda bss_level_addr, Y
+            sta zp_nt_attrib
+            ; get the hi pal address
+            
+            iny
+            cpy #$F0    ; did we complete the attrib table?
+            bne @nametable_attribs
     rts
 
 upload_pal:
