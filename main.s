@@ -292,12 +292,10 @@ upload_level:  ; CALL IN VBLANK OR WHEN BACKGROUND IS DISABLED
     clc
     adc zp_nt_offset
     sta zp_nt_offset
-    bcc @nametable_line ; complete an entire screen of tiles
+    cmp #$F0            ; 240 metatiles, nametable is full.
+    bne @nametable_line ; ...or complete an entire screen of tiles
 
-    lda #>VRAM_AT0  ; now to fill the attribute table
-    sta PPUADDR
-    lda #<VRAM_AT1
-    sta PPUADDR
+    ; now to fill the attribute table
     ldy #0
     @nametable_attribs: ; each loop completes a 32x32 block of attribs
             ; get grid byte
