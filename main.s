@@ -50,6 +50,16 @@
     .popcharmap
 .endmacro
 
+; game character mapping with (non-ascii) nterm added
+NULL_TERM = $2F
+.macro GAME_NTEXT   text
+    .pushcharmap
+    .include "charmap.inc"
+    .byte text
+    .byte NULL_TERM
+    .popcharmap
+.endmacro
+
 .segment "HEADER"
 
 INES_MAPPER = 0
