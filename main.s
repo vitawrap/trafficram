@@ -88,7 +88,7 @@ mt_brwalk:  .byte $31, $34, $3B, $3C
 mt_lwalk:   .byte $30, $31, $30, $31
 mt_rwalk:   .byte $31, $34, $31, $34
 mt_twalk:   .byte $46, $46, $31, $31
-mt_bwalk:   .byte $31, $3B, $31, $3B
+mt_bwalk:   .byte $31, $31, $3B, $3B
 mt_light:   .byte $3D, $3D, $3E, $3E
 mt_pole:    .byte $3F, $40, $3F, $40
 mt_barrier: .byte $58, $58, $3F, $40
@@ -236,9 +236,19 @@ upload_level:  ; CALL IN VBLANK OR WHEN BACKGROUND IS DISABLED
     sta PPUADDR
     ldy #0
     sty zp_nt_offset  ; store that here too before starting
+@nametable_line:
+    ldy #0
 @nametable_top:
-        ; get grid byte
-        lda bss_level_addr, Y
+        ; get grid byte (+ offset we have in ram)
+        tya
+        pha
+        clc
+        adc zp_nt_offset
+        tay
+        ldx bss_level_addr, Y
+        pla
+        tay
+        txa
         ; dissect it (6-bit type, high 2-bit pal idx) tile format: 1<<6+((mt_lrside-mts)>>2)
         and #$3F        ; tile index mask
         asl A
@@ -252,9 +262,18 @@ upload_level:  ; CALL IN VBLANK OR WHEN BACKGROUND IS DISABLED
         cpy #$10
         bne @nametable_top
 
+    ldy #0
 @nametable_btm:
         ; get grid byte
-        lda bss_level_addr, Y
+        tya
+        pha
+        clc
+        adc zp_nt_offset
+        tay
+        ldx bss_level_addr, Y
+        pla
+        tay
+        txa
         ; dissect it (6-bit type, high 2-bit pal idx) tile format: 1<<6+((mt_lrside-mts)>>2)
         and #$3F        ; tile index mask
         asl A
@@ -267,7 +286,12 @@ upload_level:  ; CALL IN VBLANK OR WHEN BACKGROUND IS DISABLED
         iny
         cpy #$10
         bne @nametable_btm
-    inc zp_nt_line
+
+    lda #$10
+    clc
+    adc zp_nt_offset
+    sta zp_nt_offset
+    bcc @nametable_line
 
 ;     lda #>VRAM_AT0
 ;     sta PPUADDR
