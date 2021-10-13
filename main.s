@@ -31,9 +31,13 @@
         VRAM_PT0    = $0000 ;       Pattern Table 0
         VRAM_PT1    = $1000 ;       Pattern Table 1
         VRAM_NT0    = $2000 ;       Nametable 0
+        VRAM_AT0    = $23C0 ;       Nametable 0 Attributes
         VRAM_NT1    = $2400 ;       Nametable 1
+        VRAM_AT1    = $27C0 ;       Nametable 1 Attributes
         VRAM_NT2    = $2800 ;       Nametable 2
+        VRAM_AT2    = $2BC0 ;       Nametable 2 Attributes
         VRAM_NT3    = $2C00 ;       Nametable 3
+        VRAM_AT3    = $2FC0 ;       Nametable 3 Attributes
         VRAM_NTM    = $3000 ;       Mirror of $2000-$2EFF
         VRAM_PAL    = $3F00 ;       Palette RAM indexes
         VRAM_PAM    = $3F20 ;       Mirror of Palette RAM indexes
@@ -131,8 +135,7 @@ zp_nmi_lock:    .res 1
 zp_periodlo:    .res 1
 zp_scroll:      .res 1
 ; used when uploading a background
-zp_nt0cursor_lo:    .res 1
-zp_nt0cursor_hi:    .res 1
+zp_nt_offset:   .res 1
 
 .segment "BSS"
 ; bss_level_addr:     .res 2
@@ -232,11 +235,11 @@ upload_level:  ; CALL IN VBLANK OR WHEN BACKGROUND IS DISABLED
     lda #<VRAM_NT0
     sta PPUADDR
     ldy #0
-@nametable_line:
+    sty zp_nt_offset  ; store that here too before starting
+@nametable_top:
         ; get grid byte
         lda bss_level_addr, Y
         ; dissect it (6-bit type, high 2-bit pal idx) tile format: 1<<6+((mt_lrside-mts)>>2)
-        pha             ; push temp unmasked byte
         and #$3F        ; tile index mask
         asl A
         asl A           ; turn index into metatile list offset (*4)
@@ -245,10 +248,40 @@ upload_level:  ; CALL IN VBLANK OR WHEN BACKGROUND IS DISABLED
         sta PPUDATA     ; write left part of tile
         lda mts+1, X
         sta PPUDATA     ; write right part of tile
-        pla             ; pull unmasked tile value
         iny
         cpy #$10
-        bne @nametable_line
+        bne @nametable_top
+
+@nametable_btm:
+        ; get grid byte
+        lda bss_level_addr, Y
+        ; dissect it (6-bit type, high 2-bit pal idx) tile format: 1<<6+((mt_lrside-mts)>>2)
+        and #$3F        ; tile index mask
+        asl A
+        asl A           ; turn index into metatile list offset (*4)
+        tax
+        lda mts+2, X
+        sta PPUDATA     ; write bottom left part of tile
+        lda mts+3, X
+        sta PPUDATA     ; write bottom right part of tile
+        iny
+        cpy #$10
+        bne @nametable_btm
+    inc zp_nt_line
+
+;     lda #>VRAM_AT0
+;     sta PPUADDR
+;     lda #<VRAM_AT1
+;     sta PPUADDR
+;     ldy #0
+; @nametable_attribs  ; each loop completes a 32x32 block of attribs
+;         ; get grid byte
+;         lda bss_level_addr, Y
+;         ; get the hi pal address
+        
+;         iny
+;         cpy #$10
+;         bne @nametable_attribs
     rts
 
 upload_pal:
