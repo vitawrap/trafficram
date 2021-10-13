@@ -198,14 +198,14 @@ nmi:
     jsr upload_dma
 
     ; scroll back into position
-    ; lda zp_scroll
-    ; sta PPUSCROLL
-    ; inc zp_scroll
-    ; lda #0
-    ; sta PPUSCROLL   ; y scroll (0)
     lda #0
+    sta PPUSCROLL   ; y scroll (0)
+    lda zp_scroll
     sta PPUSCROLL
-    sta PPUSCROLL
+    inc zp_scroll
+    ; lda #0
+    ; sta PPUSCROLL
+    ; sta PPUSCROLL
 
     ; PPU UPDATES DONE, can issue APU updates here
     
