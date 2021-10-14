@@ -306,16 +306,58 @@ upload_level:  ; CALL IN VBLANK OR WHEN BACKGROUND IS DISABLED
     bne @nametable_line ; ...or complete an entire screen of tiles
 
     ; now to fill the attribute table
+    ldx #0
     ldy #0
     @nametable_attribs: ; each loop completes a 32x32 block of attribs
-            ; get grid byte
-            lda bss_level_addr, Y
-            sta zp_nt_attrib
-            ; get the hi pal address
-            
-            iny
-            cpy #$F0    ; did we complete the attrib table?
+        stx zp_nt_attrib    ; reset attrib memory
+        lda bss_level_addr, Y       ; top left
+        and #$C0
+        clc
+        rol A
+        rol A
+        rol A
+        adc zp_nt_attrib    ; no carry, last rotated bit IS 0
+        sta zp_nt_attrib    ; or+store attrib (top left)
+
+        lda bss_level_addr+1, Y     ; top right
+        and #$C0
+        lsr A
+        lsr A
+        lsr A
+        lsr A
+        adc zp_nt_attrib    ; no carry, last shifted bit IS 0
+        sta zp_nt_attrib    ; or+store attrib (top right)
+
+        lda bss_level_addr+16, Y    ; bottom left
+        and #$C0
+        lsr A
+        lsr A
+        adc zp_nt_attrib    ; no carry, last shifted bit IS 0
+        sta zp_nt_attrib    ; or+store attrib (top right)
+
+        lda bss_level_addr+17, Y    ; bottom right
+        ; get the hi pal address
+        and #$C0            ; get pal bits (at bits 6-7)
+        adc zp_nt_attrib    ; AND does not carry
+        sta PPUDATA         ; store final attrib (bottom right)
+
+        ; did we finish a 32x strip? (check low bits for multiple of 8)
+        sty zp_nt_attrib    ; temp store our index
+        iny                 ; increment somewhere before the branch
+        tya
+        and %11111000
+        cmp zp_nt_attrib    ; cannot compare a to another register...
+        bne :+
+            clc
+            adc #$10
+            tay
+            cpy #$40            ; did we complete the attrib table? (at 4*60 tiles (240))
+            beq @nametable_done
             bne @nametable_attribs
+        :
+        beq @nametable_attribs
+
+    @nametable_done:
     rts
 
 upload_pal:
