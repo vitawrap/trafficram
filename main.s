@@ -343,21 +343,22 @@ upload_level:  ; CALL IN VBLANK OR WHEN BACKGROUND IS DISABLED
 
         ; did we finish a 32x strip? (check low bits for multiple of 8)
         sty zp_nt_attrib    ; temp store our index
-        iny                 ; increment somewhere before the branch
         tya
         and %11111000
         cmp zp_nt_attrib    ; cannot compare a to another register...
         bne :+
+            tya
             clc
             adc #$10
             tay
-            cpy #$40            ; did we complete the attrib table? (at 4*60 tiles (240))
-            beq @nametable_done
-            bne @nametable_attribs
+            jmp @nametable_test_done
         :
-        beq @nametable_attribs
+        iny
+        iny                 ; increment (we did 2 tiles)
+    @nametable_test_done:
+        cpy #$90            ; did we complete the attrib table? (at 4*60 tiles (240))
+        bne @nametable_attribs
 
-    @nametable_done:
     rts
 
 upload_pal:
