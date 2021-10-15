@@ -343,6 +343,8 @@ upload_level:  ; CALL IN VBLANK OR WHEN BACKGROUND IS DISABLED
 
         ; did we finish a 32x strip? (check low bits for multiple of 8)
         sty zp_nt_attrib    ; temp store our index
+        cpy #0
+        beq :+
         tya
         and %11111000
         cmp zp_nt_attrib    ; cannot compare a to another register...
