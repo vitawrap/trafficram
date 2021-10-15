@@ -108,25 +108,27 @@ mt_barrier: .byte $58, $58, $3F, $40
 .define strip_walk_top_3()  (mt_tlwalk-mts)>>2, (mt_twalk-mts)>>2, (mt_trwalk-mts)>>2
 .define strip_walk_mid_3()  (mt_lwalk-mts)>>2, (mt_null-mts)>>2, (mt_rwalk-mts)>>2
 .define strip_walk_btm_3()  (mt_blwalk-mts)>>2, (mt_bwalk-mts)>>2, (mt_brwalk-mts)>>2
+.define strip_park_3()      1<<6+(mt_rline-mts)>>2, 1<<6+(mt_rline-mts)>>2, 1<<6+(mt_rline-mts)>>2
+.define strip_conc_3()      3<<6+(mt_road-mts)>>2, 3<<6+(mt_road-mts)>>2, 3<<6+(mt_road-mts)>>2
 
 ; LEVELS (using strips or mt tiles)
 levels:
 lv_test:
-.byte strip_walk_top_3, strip_road_5, strip_road_5, strip_walk_top_3
-.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
-.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
-.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
-.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
-.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
-.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
-.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
-.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
-.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
-.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
-.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
-.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
-.byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
-.byte strip_walk_btm_3, strip_road_5, strip_road_5, strip_walk_btm_3
+    .byte strip_walk_top_3, strip_road_5, strip_road_5, strip_walk_top_3
+    .byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
+    .byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
+    .byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
+    .byte strip_walk_btm_3, strip_road_5, strip_road_5, strip_walk_btm_3
+.byte strip_park_3, strip_road_5, strip_road_5, strip_park_3
+.byte strip_conc_3, strip_road_5, strip_road_5, strip_conc_3
+.byte strip_conc_3, strip_road_5, strip_road_5, strip_conc_3
+    .byte strip_walk_top_3, strip_road_5, strip_road_5, strip_walk_top_3
+    .byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
+    .byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
+    .byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
+    .byte strip_walk_btm_3, strip_road_5, strip_road_5, strip_walk_btm_3
+.byte strip_conc_3, strip_road_5, strip_road_5, strip_conc_3
+.byte strip_conc_3, strip_road_5, strip_road_5, strip_conc_3
 
 
 .segment "OAM"
@@ -198,14 +200,14 @@ nmi:
     jsr upload_dma
 
     ; scroll back into position
-    lda #0
-    sta PPUSCROLL   ; y scroll (0)
-    lda zp_scroll
-    sta PPUSCROLL
-    inc zp_scroll
     ; lda #0
+    ; sta PPUSCROLL   ; y scroll (0)
+    ; lda zp_scroll
     ; sta PPUSCROLL
-    ; sta PPUSCROLL
+    ; inc zp_scroll
+    lda #0
+    sta PPUSCROLL
+    sta PPUSCROLL
 
     ; PPU UPDATES DONE, can issue APU updates here
     
@@ -342,23 +344,19 @@ upload_level:  ; CALL IN VBLANK OR WHEN BACKGROUND IS DISABLED
         sta PPUDATA         ; store final attrib (bottom right)
 
         ; did we finish a 32x strip? (check low bits for multiple of 8)
+        iny
+        iny                 ; increment (we did 2 tiles)
         sty zp_nt_attrib    ; temp store our index
-        cpy #0
-        beq :+
-        tya
-        and %11111000       ; are we done with the line?
+        tya                 ; y -> a + set zero flag
+        and #%11111000      ; are we done with the line?
         cmp zp_nt_attrib    ; cannot compare a to another register...
         bne :+
             tya
             clc
             adc #$10
             tay
-            jmp @nametable_test_done
         :
-        iny
-        iny                 ; increment (we did 2 tiles)
-    @nametable_test_done:
-        cpy #$90            ; did we complete the attrib table? (at 4*60 tiles (240))
+        cpy #$F0            ; did we complete the attrib table? (at 4*60 tiles (240))
         bne @nametable_attribs
 
     rts
