@@ -103,7 +103,7 @@ mt_light:   .byte $3D, $3D, $3E, $3E
 mt_pole:    .byte $3F, $40, $3F, $40
 mt_barrier: .byte $58, $58, $3F, $40
 
-; STRIPS (horizontal level components) (name contains the horizontal extent, for width calculations)
+; STRIPS (horizontal level components) (name contains the horizontal extent, for width calculations) (PALETTE<<6+((mt_TILE-mts)>>2))
 .define strip_road_5()      1<<6+((mt_lrside-mts)>>2), 1<<6+((mt_road-mts)>>2), 1<<6+((mt_rline-mts)>>2), 1<<6+((mt_road-mts)>>2), 1<<6+((mt_rrside-mts)>>2)
 .define strip_walk_top_3()  (mt_tlwalk-mts)>>2, (mt_twalk-mts)>>2, (mt_trwalk-mts)>>2
 .define strip_walk_mid_3()  (mt_lwalk-mts)>>2, (mt_null-mts)>>2, (mt_rwalk-mts)>>2
@@ -346,7 +346,7 @@ upload_level:  ; CALL IN VBLANK OR WHEN BACKGROUND IS DISABLED
         cpy #0
         beq :+
         tya
-        and %11111000
+        and %11111000       ; are we done with the line?
         cmp zp_nt_attrib    ; cannot compare a to another register...
         bne :+
             tya
