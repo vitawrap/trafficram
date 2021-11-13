@@ -356,8 +356,7 @@ upload_level:  ; CALL IN VBLANK OR WHEN BACKGROUND IS DISABLED
             adc #$10
             tay
         :
-        cpy #$E0            ; did we complete the attrib table? (at 4*60 tiles (240))
-        bne @nametable_attribs
+        bcc @nametable_attribs  ; did we complete the attrib table? (at 4*60 tiles (240))
 
     rts
 
