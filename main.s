@@ -344,19 +344,19 @@ upload_level:  ; CALL IN VBLANK OR WHEN BACKGROUND IS DISABLED
         sta PPUDATA         ; store final attrib (bottom right)
 
         ; did we finish a 32x strip? (check low bits for multiple of 8)
+        ;sty zp_nt_attrib    ; temp store our index
+        tya                 ; y -> a + set zero flag
         iny
         iny                 ; increment (we did 2 tiles)
-        sty zp_nt_attrib    ; temp store our index
-        tya                 ; y -> a + set zero flag
-        and #%11111000      ; are we done with the line?
-        cmp zp_nt_attrib    ; cannot compare a to another register...
+        and #%00001111      ; are we done with the line?
+        cmp #$0E            ; cannot compare a to another register...
         bne :+
             tya
             clc
             adc #$10
             tay
         :
-        cpy #$F0            ; did we complete the attrib table? (at 4*60 tiles (240))
+        cpy #$E0            ; did we complete the attrib table? (at 4*60 tiles (240))
         bne @nametable_attribs
 
     rts
