@@ -350,13 +350,13 @@ upload_level:  ; CALL IN VBLANK OR WHEN BACKGROUND IS DISABLED
         iny                 ; increment (we did 2 tiles)
         and #%00001111      ; are we done with the line?
         cmp #$0E            ; cannot compare a to another register...
+        clc                 ; unconditionally clear carry
         bne :+
             tya
-            clc
-            adc #$10
+            adc #$10        ; this sets the carry if we are done with the attribs
             tay
         :
-        bcc @nametable_attribs  ; did we complete the attrib table? (at 4*60 tiles (240))
+        bcc @nametable_attribs  ; jump back if we did not complete the table (at 4*60 tiles (240))
 
     rts
 
