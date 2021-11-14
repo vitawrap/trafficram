@@ -88,7 +88,7 @@ mt_null:    .byte $00, $00, $00, $00
 mt_road:    .byte $4F, $4F, $4F, $4F
 mt_lrside:  .byte $35, $36, $35, $36
 mt_rrside:  .byte $57, $35, $57, $35
-mt_rrvent:  .byte $39, $36, $35, $36
+mt_lrvent:  .byte $39, $36, $35, $36
 mt_rline:   .byte $57, $36, $57, $36
 mt_cone:    .byte $41, $42, $43, $44
 mt_tlwalk:  .byte $47, $46, $30, $31
@@ -102,33 +102,53 @@ mt_bwalk:   .byte $31, $31, $3B, $3B
 mt_light:   .byte $3D, $3D, $3E, $3E
 mt_pole:    .byte $3F, $40, $3F, $40
 mt_barrier: .byte $58, $58, $3F, $40
+mt_pot:     .byte $32, $33, $37, $38
+mt_foliage: .byte $4B, $49, $4D, $4E
+mt_archl:   .byte $51, $50, $51, $53
+mt_arch:    .byte $51, $50, $00, $00
+mt_archr:   .byte $51, $50, $54, $50
+mt_tunn:    .byte $55, $55, $56, $56
+mt_tunl:    .byte $52, $55, $52, $56
+mt_tunr:    .byte $55, $52, $56, $52
+mt_edge:    .byte $7F, $7F, $5F, $5F
+mt_clif:    .byte $5D, $5A, $5C, $5B
 
 ; STRIPS (horizontal level components) (name contains the horizontal extent, for width calculations) (PALETTE<<6+((mt_TILE-mts)>>2))
-.define strip_road_5()      1<<6+((mt_lrside-mts)>>2), 1<<6+((mt_road-mts)>>2), 1<<6+((mt_rline-mts)>>2), 1<<6+((mt_road-mts)>>2), 1<<6+((mt_rrside-mts)>>2)
+.define strip_roadl_5()     1<<6+(mt_lrside-mts)>>2, 1<<6+(mt_road-mts)>>2, 1<<6+(mt_rline-mts)>>2, 1<<6+(mt_road-mts)>>2, 1<<6+(mt_rrside-mts)>>2
+.define strip_road_5()      1<<6+(mt_lrvent-mts)>>2, 1<<6+(mt_road-mts)>>2, 1<<6+(mt_road-mts)>>2, 1<<6+(mt_road-mts)>>2, 1<<6+(mt_rrside-mts)>>2
 .define strip_walk_top_3()  (mt_tlwalk-mts)>>2, (mt_twalk-mts)>>2, (mt_trwalk-mts)>>2
-.define strip_walk_mid_3()  (mt_lwalk-mts)>>2, (mt_null-mts)>>2, (mt_rwalk-mts)>>2
+.define strip_walk_mid_3()  (mt_lwalk-mts)>>2, 3<<6+(mt_foliage-mts)>>2, (mt_rwalk-mts)>>2
+.define strip_walk_pot_3()  (mt_lwalk-mts)>>2, (mt_pot-mts)>>2, (mt_rwalk-mts)>>2
 .define strip_walk_btm_3()  (mt_blwalk-mts)>>2, (mt_bwalk-mts)>>2, (mt_brwalk-mts)>>2
 .define strip_park_3()      1<<6+(mt_rline-mts)>>2, 1<<6+(mt_rline-mts)>>2, 1<<6+(mt_rline-mts)>>2
-.define strip_conc_3()      3<<6+(mt_road-mts)>>2, 3<<6+(mt_road-mts)>>2, 3<<6+(mt_road-mts)>>2
+.define strip_conc_3()      1<<6+(mt_road-mts)>>2, 1<<6+(mt_road-mts)>>2, 1<<6+(mt_road-mts)>>2
+.define strip_cones_3()     1<<6+(mt_cone-mts)>>2, 1<<6+(mt_cone-mts)>>2, 1<<6+(mt_cone-mts)>>2
+.define strip_arch_3()      (mt_archl-mts)>>2, (mt_arch-mts)>>2, (mt_archr-mts)>>2
+.define strip_arch_5()      (mt_archl-mts)>>2, (mt_arch-mts)>>2, (mt_arch-mts)>>2, (mt_arch-mts)>>2, (mt_archr-mts)>>2
+.define strip_barrier_5()   1<<6+(mt_barrier-mts)>>2, 1<<6+(mt_barrier-mts)>>2, 1<<6+(mt_barrier-mts)>>2, 1<<6+(mt_barrier-mts)>>2, 1<<6+(mt_barrier-mts)>>2
+.define strip_tunn_3()      (mt_tunl-mts)>>2, (mt_tunn-mts)>>2, (mt_tunr-mts)>>2
+.define strip_tunn_5()      (mt_tunl-mts)>>2, (mt_tunn-mts)>>2, (mt_tunn-mts)>>2, (mt_tunn-mts)>>2, (mt_tunr-mts)>>2
+.define strip_edge_8()      (mt_edge-mts)>>2, (mt_edge-mts)>>2, (mt_edge-mts)>>2, (mt_edge-mts)>>2, (mt_edge-mts)>>2, (mt_edge-mts)>>2, (mt_edge-mts)>>2, (mt_edge-mts)>>2
+.define strip_cliff_8()     (mt_clif-mts)>>2, (mt_clif-mts)>>2, (mt_clif-mts)>>2, (mt_clif-mts)>>2, (mt_clif-mts)>>2, (mt_clif-mts)>>2, (mt_clif-mts)>>2, (mt_clif-mts)>>2
 
 ; LEVELS (using strips or mt tiles)
 levels:
 lv_test:
-    .byte strip_walk_top_3, strip_road_5, strip_road_5, strip_walk_top_3
-    .byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
-    .byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
-    .byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
+    .byte strip_walk_mid_3, strip_roadl_5, strip_roadl_5, strip_walk_mid_3
+    .byte strip_walk_pot_3, strip_roadl_5, strip_roadl_5, strip_walk_pot_3
     .byte strip_walk_btm_3, strip_road_5, strip_road_5, strip_walk_btm_3
-.byte strip_park_3, strip_road_5, strip_road_5, strip_park_3
-.byte strip_conc_3, strip_road_5, strip_road_5, strip_conc_3
-.byte strip_conc_3, strip_road_5, strip_road_5, strip_conc_3
-    .byte strip_walk_top_3, strip_road_5, strip_road_5, strip_walk_top_3
+.byte strip_park_3, strip_roadl_5, strip_roadl_5, strip_park_3
+.byte strip_conc_3, strip_roadl_5, strip_roadl_5, strip_conc_3
+.byte strip_cones_3, strip_road_5, strip_road_5, strip_cones_3
+    .byte strip_walk_top_3, strip_roadl_5, strip_roadl_5, strip_walk_top_3
+    .byte strip_walk_mid_3, strip_roadl_5, strip_roadl_5, strip_walk_mid_3
     .byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
-    .byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
-    .byte strip_walk_mid_3, strip_road_5, strip_road_5, strip_walk_mid_3
-    .byte strip_walk_btm_3, strip_road_5, strip_road_5, strip_walk_btm_3
-.byte strip_conc_3, strip_road_5, strip_road_5, strip_conc_3
-.byte strip_conc_3, strip_road_5, strip_road_5, strip_conc_3
+    .byte strip_walk_pot_3, strip_barrier_5, strip_barrier_5, strip_walk_pot_3
+    .byte strip_walk_btm_3, strip_arch_5, strip_arch_5, strip_walk_btm_3
+.byte strip_arch_3, strip_tunn_5, strip_tunn_5, strip_arch_3
+.byte strip_tunn_3, strip_road_5, strip_road_5, strip_tunn_3
+.byte strip_edge_8, strip_edge_8
+.byte strip_cliff_8, strip_cliff_8
 
 
 .segment "OAM"
